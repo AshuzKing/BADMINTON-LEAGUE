@@ -4,8 +4,6 @@ import { TournamentList } from './pages/TournamentList';
 import { TournamentDetails } from './pages/TournamentDetails';
 import { BracketView } from './pages/BracketView';
 import { TournamentResults } from './pages/TournamentResults';
-import { AdminAuth } from './pages/AdminAuth';
-import { LogoutAdmin } from './pages/LogoutAdmin';
 import { TournamentProvider } from './hooks/useTournaments';
 import { TeamProvider } from './hooks/useTeams';
 import { MatchProvider } from './hooks/useMatches';
@@ -27,8 +25,6 @@ function App() {
                   <Route path="/tournament/:id" element={<TournamentDetails />} />
                   <Route path="/tournament/:id/bracket" element={<BracketView />} />
                   <Route path="/tournament/:id/results" element={<TournamentResults />} />
-                  <Route path="/admin" element={<AdminAuth />} />
-                  <Route path="/logout" element={<LogoutAdmin />} />
                 </Routes>
               </main>
             </div>
