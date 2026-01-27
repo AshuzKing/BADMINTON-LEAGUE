@@ -20,7 +20,7 @@ export const Navbar = () => {
   return (
     <nav className="bg-darkBlue/80 backdrop-blur-md border-b border-white/10 px-4 sm:px-6 py-3 sm:py-4 sticky top-0 z-50 safe-area-inset">
       <div className="flex justify-between items-center gap-4">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 min-w-0">
           <button
             onClick={toggleAdmin}
             className={`text-lg sm:text-2xl font-black italic tracking-tighter flex items-center gap-2 group flex-shrink-0 rounded-lg p-2 sm:p-3 transition-all touch-target ${
@@ -33,7 +33,7 @@ export const Navbar = () => {
           >
             <span className={`${isAdmin ? 'animate-pulse' : 'group-hover:animate-pulse'}`}>⚡</span>
           </button>
-          <Link to="/" className="text-lg sm:text-2xl font-black italic tracking-tighter text-white hidden sm:block group">
+          <Link to="/" className="text-sm sm:text-lg md:text-2xl font-black italic tracking-tight text-white group truncate">
             <span className="group-hover:text-electricBlue transition-colors">Badminton League</span>
           </Link>
         </div>

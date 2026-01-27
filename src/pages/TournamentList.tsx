@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useTournaments } from '../hooks/useTournaments';
+import { useTournaments } from '../hooks/useTournamentsFirebase';
 import { TournamentCard } from '../components/tournament/TournamentCard';
 import { Button } from '../components/common/Button';
 import { Card } from '../components/common/Card';

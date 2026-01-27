@@ -42,11 +42,15 @@ export function TeamProvider({ children }: { children: ReactNode }): JSX.Element
     }
   }, []);
 
-  const addTeam = async (team: Omit<Team, 'id'>) => {
+  const addTeam = async (team: Team | Omit<Team, 'id'>) => {
     try {
+      // Strip ID if provided (handle both Team and Omit<Team, 'id'>)
+      const teamData = { ...(team as any) };
+      delete teamData.id;
+
       // Check for duplicate team name in the same tournament
       const existingTeam = teams.find(
-        t => t.name.toLowerCase() === team.name.toLowerCase() && t.tournamentId === team.tournamentId
+        t => t.name.toLowerCase() === teamData.name.toLowerCase() && t.tournamentId === teamData.tournamentId
       );
       if (existingTeam) {
         throw new Error('Team name already exists in this tournament');
@@ -54,20 +58,20 @@ export function TeamProvider({ children }: { children: ReactNode }): JSX.Element
 
       // Check for duplicate color and logo in the same tournament
       const colorDuplicate = teams.find(
-        t => t.color === team.color && t.tournamentId === team.tournamentId
+        t => t.color === teamData.color && t.tournamentId === teamData.tournamentId
       );
       if (colorDuplicate) {
         throw new Error('This color is already taken by another team');
       }
 
       const logoDuplicate = teams.find(
-        t => t.logo === team.logo && t.tournamentId === team.tournamentId
+        t => t.logo === teamData.logo && t.tournamentId === teamData.tournamentId
       );
       if (logoDuplicate) {
         throw new Error('This logo is already taken by another team');
       }
 
-      await addDoc(collection(db, 'teams'), team);
+      await addDoc(collection(db, 'teams'), teamData);
     } catch (error) {
       console.error('Error adding team:', error);
       throw error;

@@ -56,7 +56,7 @@ export function MatchProvider({ children }: { children: ReactNode }): JSX.Elemen
 
       // Add new matches
       newMatches.forEach((match) => {
-        const matchRef = doc(collection(db, 'matches'));
+        const matchRef = doc(db, 'matches', match.id);
         batch.set(matchRef, match);
       });
 

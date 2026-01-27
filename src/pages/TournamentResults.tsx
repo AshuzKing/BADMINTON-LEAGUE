@@ -1,8 +1,8 @@
 import { Link, useParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { useMatches } from '../hooks/useMatches';
-import { useTournaments } from '../hooks/useTournaments';
-import { useTeams } from '../hooks/useTeams';
+import { useMatches } from '../hooks/useMatchesFirebase';
+import { useTournaments } from '../hooks/useTournamentsFirebase';
+import { useTeams } from '../hooks/useTeamsFirebase';
 import { Match, Team } from '../types';
 
 interface TeamResult {

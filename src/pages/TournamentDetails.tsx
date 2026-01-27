@@ -1,8 +1,8 @@
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { useTournaments } from '../hooks/useTournaments';
-import { useTeams } from '../hooks/useTeams';
-import { useMatches } from '../hooks/useMatches';
+import { useTournaments } from '../hooks/useTournamentsFirebase';
+import { useTeams } from '../hooks/useTeamsFirebase';
+import { useMatches } from '../hooks/useMatchesFirebase';
 import { TeamRegistrationForm } from '../components/tournament/TeamRegistrationForm';
 import { TeamCard } from '../components/team/TeamCard';
 import { Button } from '../components/common/Button';

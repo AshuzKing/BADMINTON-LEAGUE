@@ -1,4 +1,4 @@
-import { createContext, useContext, ReactNode, useMemo } from 'react';
+import { createContext, useContext, ReactNode } from 'react';
 import { useLocalStorage } from './useLocalStorage';
 import { Team } from '../types';
 
@@ -34,13 +34,8 @@ export function TeamProvider({ children }: { children: ReactNode }): JSX.Element
     return teams.filter((t) => t.tournamentId === tournamentId);
   };
 
-  const contextValue = useMemo(
-    () => ({ teams, addTeam, updateTeam, deleteTeam, getTeamsByTournament }),
-    [teams, addTeam, updateTeam, deleteTeam, getTeamsByTournament]
-  );
-
   return (
-    <TeamContext.Provider value={contextValue}>
+    <TeamContext.Provider value={{ teams, addTeam, updateTeam, deleteTeam, getTeamsByTournament }}>
       {children}
     </TeamContext.Provider>
   );
