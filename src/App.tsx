@@ -4,9 +4,9 @@ import { TournamentList } from './pages/TournamentList';
 import { TournamentDetails } from './pages/TournamentDetails';
 import { BracketView } from './pages/BracketView';
 import { TournamentResults } from './pages/TournamentResults';
-import { TournamentProvider } from './hooks/useTournaments';
-import { TeamProvider } from './hooks/useTeams';
-import { MatchProvider } from './hooks/useMatches';
+import { TournamentProvider } from './hooks/useTournamentsFirebase';
+import { TeamProvider } from './hooks/useTeamsFirebase';
+import { MatchProvider } from './hooks/useMatchesFirebase';
 
 function App() {
   return (
