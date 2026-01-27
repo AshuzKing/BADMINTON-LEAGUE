@@ -24,7 +24,6 @@ export const TournamentList = () => {
     if (!newTournamentName) return;
 
     addTournament({
-      id: crypto.randomUUID(),
       name: newTournamentName,
       date: new Date().toLocaleDateString(),
       status: 'registration',

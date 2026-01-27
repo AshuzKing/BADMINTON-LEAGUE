@@ -14,7 +14,7 @@ export const Navbar = () => {
     setIsAdmin(newState);
     localStorage.setItem('isAdmin', String(newState));
     window.dispatchEvent(new Event('adminChange'));
-    window.location.reload();
+    // Don't reload - it breaks Firebase listeners and loses data
   };
 
   return (
