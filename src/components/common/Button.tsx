@@ -7,7 +7,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 export const Button = ({ className, variant = 'primary', fullWidth, children, ...props }: ButtonProps) => {
-  const baseStyles = "px-6 py-3 font-bold uppercase tracking-wider transform transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed clip-path-polygon";
+  const baseStyles = "px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base font-bold uppercase tracking-wider transform transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed clip-path-polygon touch-target";
   
   const variants = {
     primary: "bg-electricBlue text-white hover:bg-blue-600 shadow-[0_0_15px_rgba(0,116,255,0.5)] hover:shadow-[0_0_25px_rgba(0,116,255,0.7)]",

@@ -14,7 +14,8 @@ export interface Team {
   tournamentId: string;
   name: string;
   logo: string; // URL or emoji/icon identifier
-  members: string[]; // Player names
+  members: string[]; // Player names (max 2)
+  color: string; // Team color (hex or named color)
 }
 
 export interface Match {

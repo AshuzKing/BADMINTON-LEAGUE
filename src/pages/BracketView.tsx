@@ -27,6 +27,20 @@ export const BracketView = () => {
   });
   
   const roundNumbers = Object.keys(matchesByRound).map(Number).sort((a,b) => a-b);
+  const maxRound = Math.max(...roundNumbers);
+
+  const getRoundName = (round: number) => {
+    if (round === maxRound) {
+      return 'Final';
+    } else if (round === maxRound - 1 && maxRound > 2) {
+      return 'Semi-Final';
+    } else if (round === maxRound - 2 && maxRound > 3) {
+      return 'Quarter-Final';
+    } else if (round === maxRound - 3 && maxRound > 4) {
+      return 'Round of 16';
+    }
+    return `Round ${round}`;
+  };
 
   const handleUpdateScore = (matchId: string, scoreA: number, scoreB: number) => {
     updateMatch(matchId, { scoreA, scoreB });
@@ -65,24 +79,36 @@ export const BracketView = () => {
                } else {
                    updateMatch(nextMatch.id, { teamB: winnerTeam, teamBId: winnerId });
                }
+               
+               // Auto-advance if next match now has both teams
+               if (nextMatch.teamA && winnerTeam) {
+                   const nextMatchTeamB = isSlotA ? nextMatch.teamB : nextMatch.teamA;
+                   if (nextMatchTeamB) {
+                       // Next match is ready, it will appear automatically
+                   }
+               }
           }
       }
   };
 
   return (
-    <div className="h-full">
-         <div className="flex justify-between items-center mb-6">
-            <Link to={`/tournament/${id}`} className="text-white/50 hover:text-white font-bold text-sm uppercase">← Tournament Details</Link>
-            <h1 className="text-2xl font-black italic uppercase text-white">{tournament?.name} Bracket</h1>
+    <div className="h-full container-safe">
+         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
+            <div className="flex gap-2 sm:gap-4">
+                <Link to={`/tournament/${id}`} className="text-white/50 hover:text-white font-bold text-xs sm:text-sm uppercase">← Details</Link>
+                {matches.some(m => m.status === 'completed') && (
+                    <Link to={`/tournament/${id}/results`} className="text-neonGreen hover:text-white font-bold text-xs sm:text-sm uppercase">📊 Results</Link>
+                )}
+            </div>
+            <h1 className="text-lg sm:text-2xl font-black italic uppercase text-white text-center sm:text-right">{tournament?.name} Bracket</h1>
          </div>
 
-         <div className="overflow-x-auto pb-12">
-             <div className="flex gap-16 min-w-max px-4">
+         <div className="overflow-x-auto pb-12 -mx-4 sm:mx-0">
+             <div className="flex gap-8 sm:gap-16 min-w-max px-4 sm:px-0">
                  {roundNumbers.map(round => (
-                     <div key={round} className="flex flex-col justify-around gap-8 relative min-w-[300px]">
-                         <h3 className="text-center text-electricBlue font-bold uppercase text-sm mb-4 tracking-widest border-b border-white/10 pb-2">
-                             {round === roundNumbers.length ? 'Finals' : 
-                              round === roundNumbers.length - 1 && roundNumbers.length > 2 ? 'Semi Finals' : `Round ${round}`}
+                     <div key={round} className="flex flex-col justify-around gap-6 sm:gap-8 relative w-full sm:w-96">
+                         <h3 className="text-center text-electricBlue font-bold uppercase text-xs sm:text-sm mb-2 sm:mb-4 tracking-widest border-b border-white/10 pb-2">
+                             {getRoundName(round)}
                          </h3>
                          {matchesByRound[round].map(match => (
                              <div key={match.id} className="relative z-10">
@@ -93,13 +119,6 @@ export const BracketView = () => {
                                     onComplete={handleCompleteMatch}
                                     onStart={handleStartMatch}
                                  />
-                                 
-                                 {/* Connector Lines Logic Concept:
-                                     Div positioned absolute to right: -2rem
-                                     Height: calculated based on next match position?
-                                     Too complex for raw CSS layout in grid. 
-                                     Relying on gap-16 spacing.
-                                 */}
                              </div>
                          ))}
                      </div>

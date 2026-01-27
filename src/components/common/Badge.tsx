@@ -14,7 +14,7 @@ export const Badge = ({ status, className }: { status: 'pending' | 'live' | 'com
   const style = styles[key] || styles.pending;
 
   return (
-    <span className={twMerge("px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border rounded-sm", style, className)}>
+    <span className={twMerge("px-2 py-1 sm:py-0.5 text-xs sm:text-[10px] font-bold uppercase tracking-wider border rounded-sm touch-target", style, className)}>
       {status}
     </span>
   );

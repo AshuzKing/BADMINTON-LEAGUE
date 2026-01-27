@@ -20,10 +20,10 @@ export const AdminAuth = () => {
   }, [navigate]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
-      <div className="text-6xl mb-4 animate-bounce">🔐</div>
-      <h1 className="text-3xl font-black italic uppercase text-white mb-2">Authenticating</h1>
-      <p className="text-neonGreen font-mono animate-pulse">Initializing Admin Protocols...</p>
+    <div className="flex flex-col items-center justify-center min-h-[50vh] text-center px-4">
+      <div className="text-5xl sm:text-6xl mb-4 animate-bounce">🔐</div>
+      <h1 className="text-2xl sm:text-3xl font-black italic uppercase text-white mb-2">Authenticating</h1>
+      <p className="text-sm sm:text-base text-neonGreen font-mono animate-pulse">Initializing Admin Protocols...</p>
     </div>
   );
 };
