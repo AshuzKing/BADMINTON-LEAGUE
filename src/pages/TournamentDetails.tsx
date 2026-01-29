@@ -13,7 +13,7 @@ export const TournamentDetails = () => {
     const navigate = useNavigate();
     const { tournaments, updateTournament } = useTournaments();
     const { teams, addTeam, deleteTeam } = useTeams(id);
-    const { matches, saveMatches } = useMatches(id);
+    const { matches, saveMatches, deleteMatches } = useMatches(id);
 
     const [isAdmin, setIsAdmin] = useState(false);
 
@@ -39,6 +39,18 @@ export const TournamentDetails = () => {
                 updateTournament(id!, { status: 'active' });
             }
             navigate(`/tournament/${id}/bracket`);
+        }
+    };
+
+    const handleDeleteBracket = async () => {
+        if (!confirm('Delete the current bracket? This will remove all match data but keep teams and tournament.')) return;
+        try {
+            await deleteMatches();
+            // Optionally set tournament back to registration
+            updateTournament(id!, { status: 'registration' });
+        } catch (err) {
+            console.error('Failed to delete bracket', err);
+            alert('Failed to delete bracket. See console for details.');
         }
     };
 
@@ -140,6 +152,16 @@ export const TournamentDetails = () => {
                             >
                                 {matches.length > 0 ? 'Regenerate' : 'Generate Matches'}
                             </Button>
+                            {matches.length > 0 && (
+                                <Button
+                                    fullWidth
+                                    variant="danger"
+                                    onClick={handleDeleteBracket}
+                                    className="mt-2 text-xs sm:text-sm"
+                                >
+                                    Delete Bracket
+                                </Button>
+                            )}
                             <p className="text-xs text-white/30 mt-2 text-center">Requires min 2 teams</p>
 
                             <div className="mt-4 pt-4 border-t border-white/10 space-y-2">

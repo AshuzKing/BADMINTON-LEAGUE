@@ -8,7 +8,81 @@ export const generateKnockoutBracket = (tournamentId: string, teams: Team[]): Ma
 
   const matches: Match[] = [];
   const totalTeams = shuffledTeams.length;
-  
+  // Special handling for 6-team tournaments: create 3 matches in round 1,
+  // then 1 semifinal (between winners of matches 2 and 3), and 1 final.
+  if (totalTeams === 6) {
+    const matchesByRound: Match[][] = [];
+
+    // Round 1: three head-to-head matches
+    const round1: Match[] = [];
+    for (let i = 0; i < 3; i++) {
+      round1.push({
+        id: `match-${tournamentId}-r1-${i}`,
+        tournamentId,
+        round: 1,
+        status: 'pending',
+        scoreA: 0,
+        scoreB: 0,
+        teamA: null,
+        teamB: null,
+      } as Match);
+    }
+
+    // Round 2: one semifinal (between winners of match 1 and match 2)
+    const round2: Match[] = [
+      {
+        id: `match-${tournamentId}-r2-0`,
+        tournamentId,
+        round: 2,
+        status: 'pending',
+        scoreA: 0,
+        scoreB: 0,
+        teamA: null,
+        teamB: null,
+      } as Match,
+    ];
+
+    // Round 3: final
+    const round3: Match[] = [
+      {
+        id: `match-${tournamentId}-r3-0`,
+        tournamentId,
+        round: 3,
+        status: 'pending',
+        scoreA: 0,
+        scoreB: 0,
+        teamA: null,
+        teamB: null,
+      } as Match,
+    ];
+
+    // Link nextMatchId: match1 and match2 feed into semifinal, match0 feeds to final.
+    // Indexing: round1[0] = match A, [1] = match B, [2] = match C
+    round1[0].nextMatchId = round3[0].id; // winner of match A may go to final directly
+    round1[1].nextMatchId = round2[0].id; // winner of match B -> semifinal
+    round1[2].nextMatchId = round2[0].id; // winner of match C -> semifinal
+    round2[0].nextMatchId = round3[0].id; // semifinal winner -> final
+
+    // Populate teams into round1
+    let tIndex = 0;
+    round1.forEach((m) => {
+      if (tIndex < shuffledTeams.length) {
+        m.teamA = shuffledTeams[tIndex++];
+        m.teamAId = m.teamA.id;
+      }
+      if (tIndex < shuffledTeams.length) {
+        m.teamB = shuffledTeams[tIndex++];
+        m.teamBId = m.teamB.id;
+      }
+    });
+
+    matchesByRound.push(round1, round2, round3);
+    matches.push(...round1, ...round2, ...round3);
+
+    return matches;
+  }
+
+  // Fallback: original power-of-two bracket generation for other sizes
   // Calculate power of 2 size
   let bracketSize = 2;
   while (bracketSize < totalTeams) {
