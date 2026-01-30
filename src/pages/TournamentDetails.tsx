@@ -6,13 +6,13 @@ import { useMatches } from '../hooks/useMatchesFirebase';
 import { TeamRegistrationForm } from '../components/tournament/TeamRegistrationForm';
 import { TeamCard } from '../components/team/TeamCard';
 import { Button } from '../components/common/Button';
-import { generateKnockoutBracket } from '../utils/bracketGenerator';
+import { generateRoundRobinBracket } from '../utils/bracketGenerator';
 
 export const TournamentDetails = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const { tournaments, updateTournament } = useTournaments();
-    const { teams, addTeam, deleteTeam } = useTeams(id);
+    const { teams, addTeam, deleteTeam, updateTeam } = useTeams(id);
     const { matches, saveMatches, deleteMatches } = useMatches(id);
 
     const [isAdmin, setIsAdmin] = useState(false);
@@ -32,7 +32,7 @@ export const TournamentDetails = () => {
             return;
         }
         if (confirm('Generating matches will reset any existing bracket. Continue?')) {
-            const newMatches = generateKnockoutBracket(id!, teams);
+            const newMatches = generateRoundRobinBracket(id!, teams);
             saveMatches(newMatches);
             // Auto set status to active if not already
             if (tournament.status === 'registration') {
@@ -108,15 +108,41 @@ export const TournamentDetails = () => {
                                 <p className="text-sm sm:text-base">No teams yet. be the first to register!</p>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                {teams.map(team => (
-                                    <TeamCard
-                                        key={team.id}
-                                        team={team}
-                                        isAdmin={isAdmin}
-                                        onDelete={deleteTeam}
-                                    />
-                                ))}
+                            <div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                                    {teams.map(team => (
+                                        <TeamCard
+                                            key={team.id}
+                                            team={team}
+                                            isAdmin={isAdmin}
+                                            onDelete={deleteTeam}
+                                            onUpdate={updateTeam}
+                                        />
+                                    ))}
+                                </div>
+                                {/* Quick Edit Team Names */}
+                                <div className="bg-white/5 border border-white/10 rounded-lg p-4 sm:p-6">
+                                    <h3 className="text-xs font-bold uppercase text-white/60 mb-4 tracking-wider">Quick Edit Names</h3>
+                                    <div className="space-y-3">
+                                        {teams.map(team => (
+                                            <div key={team.id} className="flex items-center gap-2 sm:gap-3">
+                                                <span className="text-xl sm:text-2xl">{team.logo}</span>
+                                                <input
+                                                    type="text"
+                                                    value={team.name}
+                                                    onChange={(e) => {
+                                                        const newName = e.target.value;
+                                                        if (newName.trim()) {
+                                                            updateTeam(team.id, { name: newName });
+                                                        }
+                                                    }}
+                                                    className="flex-1 px-2 sm:px-3 py-1.5 sm:py-2 bg-darkBlue border border-electricBlue/40 rounded text-xs sm:text-sm text-white placeholder-white/30 focus:outline-none focus:border-electricBlue focus:ring-2 focus:ring-electricBlue/20 transition-all"
+                                                    placeholder="Team name"
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </div>
@@ -150,16 +176,37 @@ export const TournamentDetails = () => {
                                 onClick={handleGenerateMatches}
                                 className="text-xs sm:text-sm"
                             >
-                                {matches.length > 0 ? 'Regenerate' : 'Generate Matches'}
+                                {matches.length > 0 ? 'Regenerate Bracket' : 'Generate Bracket'}
                             </Button>
                             {matches.length > 0 && (
+                                <>
+                                    <Button
+                                        fullWidth
+                                        variant="warning"
+                                        onClick={handleGenerateMatches}
+                                        className="mt-2 text-xs sm:text-sm"
+                                    >
+                                        Edit Bracket
+                                    </Button>
+                                    <Button
+                                        fullWidth
+                                        variant="danger"
+                                        onClick={handleDeleteBracket}
+                                        className="mt-2 text-xs sm:text-sm"
+                                    >
+                                        Delete Bracket
+                                    </Button>
+                                </>
+                            )}
+                            {matches.length > 0 && teams.length > 0 && (
                                 <Button
                                     fullWidth
-                                    variant="danger"
-                                    onClick={handleDeleteBracket}
+                                    variant="success"
+                                    disabled={teams.length < 2}
+                                    onClick={handleGenerateMatches}
                                     className="mt-2 text-xs sm:text-sm"
                                 >
-                                    Delete Bracket
+                                    Add More Brackets
                                 </Button>
                             )}
                             <p className="text-xs text-white/30 mt-2 text-center">Requires min 2 teams</p>

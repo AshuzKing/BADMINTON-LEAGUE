@@ -99,14 +99,12 @@ export function MatchProvider({ children }: { children: ReactNode }): JSX.Elemen
     return matches.filter((m) => m.tournamentId === tournamentId);
   };
 
-  // Auto-advance logic for special 6-team brackets:
-  // When all three Round 1 matches are completed, pick the winner with the largest
-  // margin and advance them directly to the final. Place the other two winners
-  // into the semifinal so they can play for the second final slot.
+  // Auto-advance logic for round-robin brackets:
+  // Count wins per team from Round 1. Populate Round 2 with teams that have 2 wins (sequential).
+  // Populate Final with teams that have 3 wins, or with final Round 2 winner.
   useEffect(() => {
-    const processSixTeamBrackets = async () => {
+    const processRoundRobinAdvancement = async () => {
       try {
-        // Group matches by tournament
         const byTournament: Record<string, Match[]> = {};
         matches.forEach((m) => {
           if (!m.tournamentId) return;
@@ -117,53 +115,117 @@ export function MatchProvider({ children }: { children: ReactNode }): JSX.Elemen
         for (const tid of Object.keys(byTournament)) {
           const ms = byTournament[tid];
           const round1 = ms.filter((m) => m.round === 1);
-          if (round1.length !== 3) continue; // only care about 6-team pattern
-
-          // proceed only when all round1 matches are completed
-          if (!round1.every((m) => m.status === 'completed')) continue;
-
-          const semifinal = ms.find((m) => m.round === 2);
+          const round2 = ms.filter((m) => m.round === 2).sort((a, b) => {
+            const aIdx = parseInt(a.id.split('-').pop() || '0');
+            const bIdx = parseInt(b.id.split('-').pop() || '0');
+            return aIdx - bIdx;
+          });
           const final = ms.find((m) => m.round === 3);
-          if (!semifinal || !final) continue;
 
-          // avoid re-running if final already has a direct qualifier
-          if (final.teamAId) continue;
+          if (round1.length === 0) continue;
 
-          // compute winners and margins
-          const winners = round1.map((m) => {
-            const sA = m.scoreA ?? 0;
-            const sB = m.scoreB ?? 0;
-            const winnerId = m.winnerId ?? (sA > sB ? m.teamAId : m.teamBId);
-            const winnerTeam = winnerId === m.teamAId ? m.teamA : m.teamB;
-            const margin = Math.abs(sA - sB);
-            return { matchId: m.id, winnerId, winnerTeam, margin };
+          // Count wins per team from Round 1
+          const teamWins: Record<string, number> = {};
+          const teamData: Record<string, { team: any; wins: number }> = {};
+
+          round1.forEach((m) => {
+            if (m.status === 'completed') {
+              const winnerId = m.winnerId ?? (m.scoreA > m.scoreB ? m.teamAId : m.teamBId);
+              if (winnerId) {
+                teamWins[winnerId] = (teamWins[winnerId] ?? 0) + 1;
+                const team = winnerId === m.teamAId ? m.teamA : m.teamB;
+                if (team && !teamData[winnerId]) {
+                  teamData[winnerId] = { team, wins: 0 };
+                }
+                teamData[winnerId].wins = teamWins[winnerId];
+              }
+            }
           });
 
-          // sort by margin descending
-          winners.sort((a, b) => b.margin - a.margin);
-          const top = winners[0];
-          const otherTwo = [winners[1], winners[2]];
+          // Teams with 3 wins go directly to final
+          const threeWinners = Object.entries(teamWins)
+            .filter(([_, wins]) => wins === 3)
+            .map(([id, _]) => id);
 
-          // update semifinal with the other two winners
-          await updateDoc(doc(db, 'matches', semifinal.id), {
-            teamAId: otherTwo[0].winnerId,
-            teamBId: otherTwo[1].winnerId,
-            teamA: otherTwo[0].winnerTeam ?? null,
-            teamB: otherTwo[1].winnerTeam ?? null,
-          });
+          // Teams with 2 wins go to Round 2 (sequential bracket)
+          const twoWinners = Object.entries(teamWins)
+            .filter(([_, wins]) => wins === 2)
+            .map(([id, _]) => id);
 
-          // update final's teamA as the top margin winner
-          await updateDoc(doc(db, 'matches', final.id), {
-            teamAId: top.winnerId,
-            teamA: top.winnerTeam ?? null,
-          });
+          // Populate Round 2 matches sequentially
+          // Example: 3 teams with 2 wins → R2M1: T1 vs T2, R2M2: winner vs T3
+          if (twoWinners.length > 0 && round2.length > 0) {
+            let r2MatchIdx = 0;
+            let nextTeamIdx = 0;
+
+            while (nextTeamIdx < twoWinners.length && r2MatchIdx < round2.length) {
+              const r2Match = round2[r2MatchIdx];
+
+              // Populate teamA
+              if (!r2Match.teamAId && nextTeamIdx < twoWinners.length) {
+                const teamId = twoWinners[nextTeamIdx];
+                await updateDoc(doc(db, 'matches', r2Match.id), {
+                  teamAId: teamId,
+                  teamA: teamData[teamId].team,
+                });
+                nextTeamIdx++;
+              }
+
+              // Populate teamB
+              if (!r2Match.teamBId && nextTeamIdx < twoWinners.length) {
+                const teamId = twoWinners[nextTeamIdx];
+                await updateDoc(doc(db, 'matches', r2Match.id), {
+                  teamBId: teamId,
+                  teamB: teamData[teamId].team,
+                });
+                nextTeamIdx++;
+              }
+
+              // Check if this R2 match is completed
+              if (r2Match.status === 'completed' && r2Match.winnerId) {
+                const winner = r2Match.winnerId === r2Match.teamAId ? r2Match.teamA : r2Match.teamB;
+
+                // If there are more teams waiting, advance winner to next R2 match
+                if (nextTeamIdx < twoWinners.length && r2MatchIdx + 1 < round2.length) {
+                  const nextR2Match = round2[r2MatchIdx + 1];
+                  if (!nextR2Match.teamAId) {
+                    await updateDoc(doc(db, 'matches', nextR2Match.id), {
+                      teamAId: r2Match.winnerId,
+                      teamA: winner,
+                    });
+                  }
+                  r2MatchIdx++;
+                } else if (nextTeamIdx >= twoWinners.length) {
+                  // All 2-win teams have played, this is the final R2 winner
+                  // They go to Final as teamB
+                  if (final && !final.teamBId) {
+                    await updateDoc(doc(db, 'matches', final.id), {
+                      teamBId: r2Match.winnerId,
+                      teamB: winner,
+                    });
+                  }
+                  break;
+                }
+              } else {
+                r2MatchIdx++;
+              }
+            }
+          }
+
+          // Place 3-win team in Final as teamA
+          if (final && !final.teamAId && threeWinners.length > 0) {
+            await updateDoc(doc(db, 'matches', final.id), {
+              teamAId: threeWinners[0],
+              teamA: teamData[threeWinners[0]].team,
+            });
+          }
         }
       } catch (error) {
-        console.error('Error processing 6-team bracket advancement:', error);
+        console.error('Error processing round-robin advancement:', error);
       }
     };
 
-    if (matches.length) processSixTeamBrackets();
+    if (matches.length) processRoundRobinAdvancement();
   }, [matches]);
 
   return (

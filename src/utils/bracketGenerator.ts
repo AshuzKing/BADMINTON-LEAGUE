@@ -1,5 +1,118 @@
 import { Team, Match } from '../types';
 
+/**
+ * Round-Robin Bracket Generator
+ * - Each team plays exactly 3 matches against different opponents
+ * - No team plays the same opponent twice
+ * - Teams with 2+ wins advance to Round 2
+ * - Teams with 3 wins advance directly to Final
+ * - Round 2 winners advance to Final
+ */
+export const generateRoundRobinBracket = (tournamentId: string, teams: Team[]): Match[] => {
+  if (teams.length < 2) return [];
+
+  const matches: Match[] = [];
+  const shuffledTeams = [...teams].sort(() => Math.random() - 0.5);
+  let matchCounter = 0;
+
+  // For 6 teams: Use balanced round-robin where each team plays exactly 3 matches
+  // This ensures coverage and no team is left out
+  if (shuffledTeams.length === 6) {
+    const pairings = [
+      [0, 1], [0, 2], [0, 3],  // Team 0 plays teams 1, 2, 3
+      [1, 4], [1, 5],           // Team 1 plays teams 4, 5 (+ 0 above = 3 total)
+      [2, 4], [2, 5],           // Team 2 plays teams 4, 5 (+ 0 above = 3 total)
+      [3, 4], [3, 5],           // Team 3 plays teams 4, 5 (+ 0 above = 3 total)
+    ];
+
+    // Create matches from pairings
+    pairings.forEach(([i, j]) => {
+      matches.push({
+        id: `match-${tournamentId}-r1-${matchCounter++}`,
+        tournamentId,
+        round: 1,
+        status: 'pending',
+        scoreA: 0,
+        scoreB: 0,
+        teamA: shuffledTeams[i],
+        teamAId: shuffledTeams[i].id,
+        teamB: shuffledTeams[j],
+        teamBId: shuffledTeams[j].id,
+      });
+    });
+  } else {
+    // For other team counts: Standard round-robin (max 3 per team)
+    const teamMatchCount: Record<string, number> = {};
+    const maxMatchesPerTeam = 3;
+    
+    shuffledTeams.forEach(t => {
+      teamMatchCount[t.id] = 0;
+    });
+
+    // Generate pairings while respecting max matches per team
+    for (let i = 0; i < shuffledTeams.length; i++) {
+      for (let j = i + 1; j < shuffledTeams.length; j++) {
+        const teamA = shuffledTeams[i];
+        const teamB = shuffledTeams[j];
+
+        if (
+          teamMatchCount[teamA.id] >= maxMatchesPerTeam ||
+          teamMatchCount[teamB.id] >= maxMatchesPerTeam
+        ) {
+          continue;
+        }
+
+        matches.push({
+          id: `match-${tournamentId}-r1-${matchCounter++}`,
+          tournamentId,
+          round: 1,
+          status: 'pending',
+          scoreA: 0,
+          scoreB: 0,
+          teamA,
+          teamAId: teamA.id,
+          teamB,
+          teamBId: teamB.id,
+        });
+        
+        teamMatchCount[teamA.id]++;
+        teamMatchCount[teamB.id]++;
+      }
+    }
+  }
+
+  // Round 2: Placeholder for teams with 2 wins
+  const round2Matches: Match[] = [];
+  for (let i = 0; i < Math.ceil(shuffledTeams.length / 2); i++) {
+    round2Matches.push({
+      id: `match-${tournamentId}-r2-${i}`,
+      tournamentId,
+      round: 2,
+      status: 'pending',
+      scoreA: 0,
+      scoreB: 0,
+      teamA: null,
+      teamB: null,
+    });
+  }
+  matches.push(...round2Matches);
+
+  // Final: Single match placeholder
+  const finalMatch: Match = {
+    id: `match-${tournamentId}-final-0`,
+    tournamentId,
+    round: 3,
+    status: 'pending',
+    scoreA: 0,
+    scoreB: 0,
+    teamA: null,
+    teamB: null,
+  };
+  matches.push(finalMatch);
+
+  return matches;
+};
+
 export const generateKnockoutBracket = (tournamentId: string, teams: Team[]): Match[] => {
   if (teams.length < 2) return [];
 
